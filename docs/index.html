@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Get Slack Token</title>
+    <style>
+        body {
+            color: #444;
+            background: #f1f1f1;
+            font-size: 16px;
+        }
+
+        #app {
+            width: 90%;
+            max-width: 800px;
+            margin: 30px auto;
+            background: #fff;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            margin: 0;
+            color: #2196F3;
+            font-size: 30px;
+            text-align: center;
+        }
+
+        h2 {
+            margin: 30px 0 15px;
+            color: #2196F3;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        hr {
+            border: 0;
+            border-top: 1px dotted #2196F3;
+            margin: 30px 15px;
+        }
+
+        dl {
+            max-width: 360px;
+            margin: 15px auto;
+        }
+
+        dt {
+            color: #1565C0;
+            text-align: center;
+        }
+
+        dd {
+            margin: 0;
+            padding: 5px;
+        }
+
+        dd input {
+            width: 100%;
+            height: 30px;
+            padding: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            display: block;
+            background: #1E88E5;
+            color: #fff;
+            height: 45px;
+            width: 250px;
+            font-size: 16px;
+            margin: 15px auto;
+            border: 0;
+        }
+
+        p.hint {
+            margin: -10px auto 0;
+            text-align: center;
+            font-size: 14px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Get Slack Token</h1>
+        <p>
+            SlackのAccessTokenを取得するための簡易ツールです。<br>
+            事前に<a href="https://api.slack.com/apps" target="_blank">Slackアプリ登録</a>を行い、ClientIDなどを発行する必要があります。<br>
+            Redirect URLには「https://rutan.github.io/get-slack-token/」を指定してください。
+        </p>
+        <hr>
+        <form @submit="onSubmitForCode" action="https://slack.com/oauth/authorize" v-if="step === 1">
+            <h2>Step.1 コードの取得</h2>
+            <dl>
+                <dt>Client ID</dt>
+                <dd>
+                    <input type="text" name="client_id" v-model="clientId">
+                </dd>
+                <dt>scope（カンマ区切り / <a href="https://api.slack.com/docs/oauth-scopes" target="_blank">Scope一覧はこちら</a>）</dt>
+                <dd>
+                    <input type="text" name="scope">
+                </dd>
+            </dl>
+            <input type="hidden" name="redirect_uri" value="https://rutan.github.io/get-slack-token/">
+            <button>コード取得</button>
+            <p class="hint">（Slackの認可画面が表示されます）</p>
+        </form>
+
+        <form action="https://slack.com/api/oauth.access" v-if="step === 2">
+            <h2>Step.2 トークンの取得</h2>
+            <dl>
+                <dt>Client ID</dt>
+                <dd>
+                    <input type="text" name="client_id" v-model="clientId">
+                </dd>
+                <dt>Client Secret</dt>
+                <dd>
+                    <input type="text" name="client_secret">
+                </dd>
+            </dl>
+            <input type="hidden" name="redirect_uri" value="https://rutan.github.io/get-slack-token">
+            <input type="hidden" name="code" v-model="code">
+            <button>トークンの取得</button>
+            <p class="hint">（JSONが表示されます）</p>
+        </form>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.1.3/vue.min.js"></script>
+    <script>
+        var params = {};
+        document.location.search.substring(1)
+            .split('&')
+            .filter(function (s) { return s.length > 0; })
+            .forEach(function (str) {
+                var items = str.split('=').map(function (n) { return decodeURIComponent(n); })
+                params[items[0]] = items[1];
+            });
+
+        var app = new Vue({
+            el: '#app',
+            data: {
+                step: params.code ? 2 : 1,
+                clientId: '',
+                code: params.code
+            },
+            mounted: function() {
+                this.clientId = sessionStorage.getItem('get-slack-token::client_id') || '';
+            },
+            methods: {
+                onSubmitForCode: function (e) {
+                    sessionStorage.setItem('get-slack-token::client_id', this.clientId);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
